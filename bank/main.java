@@ -1,80 +1,94 @@
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask; 
-class Bank{
-    private double balance =  500; 
-    private int account_no = 123456;
-    private double apy = 2.5;
-    private boolean hasLoop = false;
-    public double getBalance(){
-        return balance;
-    }
-
-    public void withdraw(int amount) throws Exception{
-        Scanner scan = new Scanner(System.in);
-        System.out.println(scan); 
-    }
-
-    void collectInterest(Bank bank){
-        bank.balance = bank.balance +  bank.balance * bank.apy / 100; 
-    }
-    static  int loop(Bank bank, Scanner scan){
-        System.out.println("\n What would you like to do? \n Options: \n 1. bal - check your balance \n 2. withdraw - withdraw money \n 3. deposit - deposit money \n 4. close - exit application");
-        String action = scan.next(); 
-       if(action.startsWith("bal")){
-         System.out.println("\n Your balance is $" + bank.balance + " with  " + bank.apy + "% apy");
-       }else if(action.startsWith("withdraw")){ 
-         System.out.println("How much do you want to withdraw? " + " You have " + bank.balance + " note: there is a 2.5% wtihdraw interest");
-         double amount = scan.nextDouble();
-         double amountBefore = amount;
-         amount = amount - amount * 2.5 / 100; // take out interest
-         if(amountBefore >= bank.balance){
-           System.out.println("\n Amount withdrew exceeds or is equal to the curent balance of $" + bank.balance );
-           loop(bank, scan);
-           return 0;
-         }
-         bank.balance = bank.balance - amount;
-         System.out.println("\n Interest Collected $" + Math.ceil(amountBefore * 2.5 / 100));
-         System.out.println("\n Your new balance is $" + Math.round(bank.balance) + " " + " Amount withdrew = $" + amount);
-       } else if(action.startsWith("close")){ 
-         return 0;
-       }
-       else if(action.startsWith("deposit")){ 
-        System.out.println("\n How much? Note: there is a 2.5% deposit interest fee");
-        double amount = scan.nextDouble(); 
-        amount = amount - amount *2.5 / 100;
-        bank.balance =  bank.balance + amount; 
-        System.out.println("\n Ammount Deposited $" + amount); 
-        System.out.println("\n New Balance $" + bank.balance);
-      }
-       if(!bank.hasLoop){
-        bank.hasLoop = true;
-         new Timer().scheduleAtFixedRate(new TimerTask() { 
-            public void run(){
-              bank.collectInterest(bank);
-            }
-         }, 0, 6000);
-       }
-       loop(bank, scan);
-       return 1;
-    }
-    public static void main(String[] args) {
-        Bank bank = new Bank();
-        Scanner scan  = new Scanner(System.in);
-        System.out.println("What is your account number?");
-        int account_no  = scan.nextInt();
-        bank.account_no = account_no; 
-        loop(bank, scan);
-       
-    
-    }
-}
-
+import javax.swing.*; 
+import java.awt.*;
+import Bank.*; 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Timer; 
+import java.util.TimerTask;   
  
-public class main {
-     
+public class main { 
+ 
+     public static void main(String[] args) {  
+        bank b = new bank(); 
+        JFrame frame = new JFrame("Capitol None Banking ");  
+        Font arial = new Font("Monospace", Font.PLAIN, 20);
+        frame.setSize(500, 500);
+        JPanel panel = new JPanel(new GridLayout(8, 5, 120, 20));
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);    
+        JLabel money = new JLabel(" Your balance is $" +b.balance);
+        money.setFont(arial);
+        panel.add(money);
+        JLabel apyJLabel = new JLabel("Account apy is at 2.5%"); 
+        apyJLabel.setFont(arial); 
+        panel.add(apyJLabel); 
+        panel.add(new JLabel("Make a Deposit"));
+        JTextField field = new JTextField("Insert Amount to Deposit", 0);
+        field.addMouseListener( new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent e){
+            field.setText("");
+          }
+        });
+        panel.add(field);
+        JButton depobutton = new JButton("Deposit");
+        depobutton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent e){
+           double amount = new Double(field.getText());
+          if(amount > 0){
+             b.balance = b.balance + amount - amount * 2.5 / 100;
+             field.setText("Insert Amount To Deposit");  
+             JOptionPane.showMessageDialog(frame, "Deposited $" + new String().valueOf(amount - amount * 2.5 / 100) + " Successfully");
+          }
+         }
+        });
+        JLabel withdrawJLabel = new JLabel("Withdraw Money From Your Account");
+        withdrawJLabel.setFont(arial);
+        panel.add(depobutton); 
+        panel.add(withdrawJLabel);
 
-    public static void main(String[] args) {
-        new Bank(); 
-    }
+        JButton witdButton = new JButton("Withdraw");
+
+        JTextField field2 = new JTextField("Insert Amount to Withdraw", 0);
+
+        field2.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent e) { 
+            field2.setText("");
+          }
+        });
+
+        panel.add(field2);
+        
+        witdButton.addMouseListener(new MouseAdapter() { 
+         @Override
+         public void mouseClicked(MouseEvent e) { 
+            double amount = new Double(field2.getText());
+            if(amount >= b.balance){
+               JOptionPane.showMessageDialog(frame, "Error: You inputted a value higher than you have in your account");
+               field2.setText("Insert Amount to Withdraw");
+               return;
+            }
+            amount = amount  - amount * 2.5 / 100;
+            b.balance = b.balance - amount; 
+            System.out.println(b.balance);
+            
+            JOptionPane.showMessageDialog(frame,  "Successfully withdrew $" + amount);
+
+         }
+        });
+
+        panel.add(witdButton);
+         
+        new Timer().schedule(new TimerTask() {
+           public void run(){
+               b.balance = Math.round( b.balance  + b.balance * 2.5 / 100);
+               money.setText("Your balance is $" + String.valueOf(b.balance));
+           }
+        }, 20, 3005);
+        frame.add(panel);
+        frame.setVisible(true);
+     }
 }
